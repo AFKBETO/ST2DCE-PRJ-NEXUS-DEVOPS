@@ -1,34 +1,79 @@
+dockerImage = 'dockernexus101/app01'
+
 pipeline {
-    agent any
-
-    environment {
-        DOCKER_REPO = 'dockernexus101/app01'
-    }
-
+	agent { label 'arm64' }
+	options {
+		parallelsAlwaysFailFast()
+	}
     stages {
-		stage('Git checkout') {
+		stage('Git Checkout') {
 			steps {
-				checkout scm
 				script {
-					env.IMAGE = "$DOCKER_REPO:build-$BRANCH_NAME-$GIT_COMMIT"
+					checkout scm
+					branchName = env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+					commit = env.GIT_COMMIT.take(7)
+					imgTag = ''
+					if (env.BRANCH_NAME != 'main') {
+						imgTag = "build-${branchName}-${commit}"
+					} else {
+						imgTag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
+					}
 				}
 			}
 		}
         stage('Build Docker Image') {
-            steps {
-				sh """
-					docker buildx build --platform linux/arm64,linux/amd64 -t $IMAGE .
-				"""
-            }
+			parallel {
+				stage('Build Docker Image amd64') {
+					agent { label 'amd64' }
+					steps {
+						script {
+							imageamd64 = docker.build("${dockerImage}:${imgTag}-amd64")
+						}
+					}
+				}
+				stage('Build Docker Image arm64') {
+					agent { label 'arm64' }
+					steps {
+						script {
+							imagearm64 = docker.build("${dockerImage}:${imgTag}-arm64")
+						}
+					}
+				}
+			}
+		}
+		
+		stage('Push Docker Image') {
+			parallel {
+				stage('Push Docker Image amd64') {
+					agent { label 'amd64' }
+					steps {
+						script {
+							withDockerRegistry(credentialsId: 'dockernexus101') {
+								imageamd64.push()
+							}
+						}
+					}
+				}
+				stage('Push Docker Image arm64') {
+					agent { label 'arm64' }
+					steps {
+						script {
+							withDockerRegistry(credentialsId: 'dockernexus101') {
+								imagearm64.push()
+							}
+						}
+					}
+				}
+			}
         }
 
-        stage('Push Docker Image') {
+        stage('Build Docker manifest and push') {
+			agent { label 'arm64' }
             steps {
 				script {
 					withDockerRegistry(credentialsId: 'dockernexus101') {
-						sh """
-							docker push $IMAGE
-						"""
+						sh "docker manifest create ${dockerImage}:${imgTag} ${dockerImage}:${imgTag}-amd64 ${dockerImage}:${imgTag}-arm64"
+						sh "docker manifest push ${dockerImage}:${imgTag}"
 					}
 				}
             }
