@@ -11,7 +11,7 @@ pipeline {
 				script {
 					checkout scm
 					imgTag = ''
-					if (env.BRANCH_NAME == main) {
+					if (env.BRANCH_NAME == 'main') {
 						// check if the branch is main
 						commit = env.GIT_COMMIT.take(7)
 						imgTag = 'main-${commit}'
