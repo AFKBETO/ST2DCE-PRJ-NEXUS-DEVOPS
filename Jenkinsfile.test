@@ -44,6 +44,7 @@ pipeline {
 					tag = 'v' + tag.join('.')
 					sh """
 						git checkout main
+						git pull
 						git checkout -b release/$tag
 					"""
 				}
