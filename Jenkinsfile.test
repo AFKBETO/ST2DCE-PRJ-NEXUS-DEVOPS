@@ -7,6 +7,8 @@ properties([
 	disableResume(),
 ])
 
+def remoteOrigin = "https://github.com/AFKBETO/ST2DCE-PRJ-NEXUS.git"
+
 pipeline {
 	agent any
 	stages{
@@ -50,18 +52,24 @@ pipeline {
 		stage('Push a new tag on GitHub') {
 			steps {
 				script {
-					sh """
-						# checkout to release branch
-						git checkout release/$tag
+					withCredentials([usernamePassword(credentialsId: 'OrstedApp', usernameVariable: 'GITHUB_APP', passwordVariable: 'GITHUB_TOKEN')]) {
+						sh """
+							git config --global user.email "qv.nguyen00@gmail.com"
+							git config --global user.name "github_app"
+							git remote set-url origin $remoteOrigin 
 
-						# create and push tag
-						git tag -a $tag -m "Release $tag"
-						git push origin $tag
+							# checkout to release branch
+							git checkout release/$tag
 
-						# cleanup release branch
-						git checkout main
-						git branch -D release/$tag
-					"""
+							# create and push tag
+							git tag -a $tag -m "Release $tag"
+							git push origin $tag
+
+							# cleanup release branch
+							git checkout main
+							git branch -D release/$tag
+						"""
+					}
 				}
 			}
 		}
