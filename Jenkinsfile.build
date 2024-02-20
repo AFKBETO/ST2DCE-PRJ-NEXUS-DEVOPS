@@ -21,7 +21,7 @@ pipeline {
 						imgTag = "build-${branchName}-${commit}"
 					} else {
 						if (buildingTag()) {
-							sh"echo 'building tag'"
+							sh"echo $TAG_NAME"
 						}
 						imgTag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
 					}
