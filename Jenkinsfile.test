@@ -9,7 +9,21 @@ properties([
 
 pipeline {
 	agent any
+
+	options {
+		skipDefaultCheckout()
+	}
+
 	stages{
+		stage('SCM Checkout') {
+			steps {
+				script {
+					cleanWs()
+					checkout scm
+				}
+			}
+		}
+
 		stage('Test application') {
 			steps {
 				script {
@@ -68,6 +82,17 @@ pipeline {
 						"""
 					}
 				}
+			}
+		}
+
+		post {
+			always {
+				clearWs(
+					cleanWhenNotBuilt: false,
+					deleteDirs: true,
+					disableDeferredWipeout: true,
+					notFailBuild: true
+				)
 			}
 		}
 	}
