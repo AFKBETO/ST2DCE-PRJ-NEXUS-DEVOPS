@@ -14,9 +14,12 @@ pipeline {
 		TAG_NAME = null
 	}
     stages {
-		stage('SCM Checkout') {
+		stage('Prepare variables') {
 			steps {
 				script {
+					if (buildingTag()) {
+						echo "TAG_NAME is not null: ${env.TAG_NAME}"
+					}
 					imgTag = ''
 					if (env.BRANCH_NAME == 'main') {
 						// check if the branch is main
