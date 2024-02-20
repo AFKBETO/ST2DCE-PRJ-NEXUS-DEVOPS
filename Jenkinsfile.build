@@ -99,7 +99,9 @@ pipeline {
 			when {
 				anyOf {
 					branch 'main'
-					readCurrentTag()
+					expression {
+						return readCurrentTag()
+					}
 				}
 			}
 			steps {
