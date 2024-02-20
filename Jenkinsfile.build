@@ -21,7 +21,7 @@ pipeline {
 						imgTag = "build-${branchName}-${commit}"
 					} else {
 						if (buildingTag()) {
-							sh"echo $TAG_NAME"
+							sh"echo 'building tag'"
 						}
 						imgTag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
 					}
@@ -94,8 +94,9 @@ pipeline {
 			}
 			steps {
 				script {
-					def environment = 'dev'
+					environment = 'dev'
 					if (buildingTag()) {
+						sh "echo 'deploying to prod'"
 						environment = 'prod'
 					}
 					build job: 'ST2DCE_Project_Nexus/Deploy', parameters: [
