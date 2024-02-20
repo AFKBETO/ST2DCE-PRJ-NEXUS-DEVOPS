@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: PARAMS_DEPLOYMENT
+  labels:
+    app: java-app
+  namespace: PARAMS_NAMESPACE
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: java-app
+  template:
+    metadata:
+      labels:
+        app: java-app
+    spec:
+      containers:
+        - name: java-pod
+          image: dockernexus101/app01:PARAMS_VERSION
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: v1
+# Kind for service
+kind: Service
+metadata:
+  # Name your service
+  name: java-app
+  labels:
+    app: java-app
+  namespace: PARAMS_NAMESPACE
+spec:
+  # Choose how to expose your service
+  type: LoadBalancer
+  ports:
+    # The port number to expose the service
+    - port: PARAMS_SERVICE_PORT
+      targetPort: 8080
+  # Pod to route service traffic  
+  selector:
+    app: java-app
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: devops-ingress
+  namespace: PARAMS_NAMESPACE
+  annotations:
+    kubernetes.io/ingress.allow-http: "false"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: PARAMS_NAMESPACE-stripprefix@kubernetescrd
+    ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/issuer: prod-issuer
+    cert-manager.io/issuer-kind: OriginIssuer
+    cert-manager.io/issuer-group: cert-manager.k8s.cloudflare.com
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+      - kube.minhviet.cc
+      secretName: devops-certificate
+  rules:
+    - host: kube.minhviet.cc
+      http:
+        paths:
+          - path: /PARAMS_ENDPOINT
+            pathType: Prefix
+            backend:
+              service:
+                name: java-app
+                port:
+                  number: PARAMS_SERVICE_PORT
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix
+  namespace: PARAMS_NAMESPACE
+spec:
+  stripPrefix:
+    prefixes:
+      - /PARAMS_ENDPOINT
+
