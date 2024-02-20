@@ -1,7 +1,7 @@
 dockerImage = 'dockernexus101/app01'
 
 def readCurrentTag() {
-	def tag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
+	def tag = sh(returnStdout: true, script: "git --no-pager tag --points-at HEAD").trim()
 	return tag
 }
 
@@ -11,7 +11,7 @@ pipeline {
 		parallelsAlwaysFailFast()
 	}
 	environment {
-		TAG_NAME = null
+		TAG_NAME = readCurrentTag()
 	}
     stages {
 		stage('Prepare variables') {
