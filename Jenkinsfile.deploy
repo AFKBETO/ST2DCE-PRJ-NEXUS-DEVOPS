@@ -65,5 +65,17 @@ pipeline {
 				}
 			}
 		}
+
+		stage('Run test in dev') {
+			when {
+				expression {
+					return params.env == 'dev'
+				}
+			}
+			steps {
+				build job: 'ST2DCE_Project_Nexus/Test', wait: false	
+			}
+		}
+
     }
 }

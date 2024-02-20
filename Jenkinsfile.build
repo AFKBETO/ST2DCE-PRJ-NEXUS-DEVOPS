@@ -80,8 +80,10 @@ pipeline {
             steps {
 				script {
 					withDockerRegistry(credentialsId: 'dockernexus101') {
-						sh "docker manifest create ${dockerImage}:${imgTag} ${dockerImage}:${imgTag}-amd64 ${dockerImage}:${imgTag}-arm64"
-						sh "docker manifest push ${dockerImage}:${imgTag}"
+						sh """
+							docker manifest create ${dockerImage}:${imgTag} ${dockerImage}:${imgTag}-amd64 ${dockerImage}:${imgTag}-arm64
+							docker manifest push ${dockerImage}:${imgTag}
+						"""
 					}
 				}
             }
@@ -98,7 +100,7 @@ pipeline {
 				script {
 					environment = 'dev'
 					if (buildingTag()) {
-						sh "echo 'deploying to prod'"
+						echo 'deploying to prod'
 						environment = 'prod'
 					}
 					build job: 'ST2DCE_Project_Nexus/Deploy', parameters: [
