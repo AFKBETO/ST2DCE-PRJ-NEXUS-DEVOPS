@@ -98,7 +98,7 @@ pipeline {
 					if (buildingTag()) {
 						environment = 'prod'
 					}
-					build job: 'Deploy', parameters: [
+					build job: 'ST2DCE_Project_Nexus/Deploy', parameters: [
 						string(name: 'env', value: 'dev'),
 						string(name: 'version', value: imgTag)
 					]
