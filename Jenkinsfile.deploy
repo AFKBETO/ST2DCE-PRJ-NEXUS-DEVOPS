@@ -54,17 +54,19 @@ pipeline {
 			}
 		}
 
-		withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-			stage('Deploy to Kubernetes') {
-				steps {
+		stage('Deploy to Kubernetes') {
+			steps {
+				withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
 					script {
-						sh 'kubectl --kubeconfig=$KUBECONFIG apply -f ./k8s/deployment.yml'
+						sh "kubectl --kubeconfig=$KUBECONFIG apply -f ./k8s/deployment.yml"
 					}
 				}
 			}
+		}
 
-			stage('Force rolling update') {
-				steps {
+		stage('Force rolling update') {
+			steps {
+				withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
 					script {
 						sh "kubectl --kubeconfig=$KUBECONFIG rollout restart deployment/${deploymentName} -n ${paramsMap[params.env].namespace}"
 					}
