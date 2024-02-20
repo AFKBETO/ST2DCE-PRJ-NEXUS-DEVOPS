@@ -1,5 +1,10 @@
 dockerImage = 'dockernexus101/app01'
 
+def readCurrentTag() {
+	def tag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
+	return tag
+}
+
 pipeline {
 	agent { label 'arm64' }
 	options {
@@ -20,7 +25,8 @@ pipeline {
 						commit = env.GIT_COMMIT.take(7)
 						imgTag = "build-${branchName}-${commit}"
 					} else {
-						imgTag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
+						imgTag = readCurrentTag()
+						env.TAG_NAME = imgTag
 					}
 				}
 			}
