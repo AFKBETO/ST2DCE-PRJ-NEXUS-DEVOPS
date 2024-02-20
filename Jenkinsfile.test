@@ -50,23 +50,21 @@ pipeline {
 		stage('Push a new tag on GitHub') {
 			steps {
 				script {
-					withCredentials([usernamePassword(credentialsId: 'OrstedApp', usernameVariable: 'GITHUB_APP', passwordVariable: 'GITHUB_TOKEN')]) {
-						sh """
-							git config --global user.email "qv.nguyen00@gmail.com"
-							git config --global user.name "github_app"
+					sh """
+						git config --global user.email "qv.nguyen00@gmail.com"
+						git config --global user.name "github_app"
 
-							# checkout to release branch
-							git checkout release/$tag
+						# checkout to release branch
+						git checkout release/$tag
 
-							# create and push tag
-							git tag -a $tag -m "Release $tag"
-							git push origin $tag
+						# create and push tag
+						git tag -a $tag -m "Release $tag"
+						git push origin $tag
 
-							# cleanup release branch
-							git checkout main
-							git branch -D release/$tag
-						"""
-					}
+						# cleanup release branch
+						git checkout main
+						git branch -D release/$tag
+					"""
 				}
 			}
 		}
