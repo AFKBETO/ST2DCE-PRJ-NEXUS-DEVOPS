@@ -99,13 +99,13 @@ pipeline {
 			when {
 				anyOf {
 					branch 'main'
-					buildingTag()
+					readCurrentTag()
 				}
 			}
 			steps {
 				script {
 					environment = 'dev'
-					if (buildingTag()) {
+					if (readCurrentTag()) {
 						echo 'deploying to prod'
 						environment = 'prod'
 					}
