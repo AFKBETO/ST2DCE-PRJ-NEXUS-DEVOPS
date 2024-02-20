@@ -16,10 +16,13 @@ pipeline {
 						commit = env.GIT_COMMIT.take(7)
 						imgTag = "main-${commit}"
 					} else if (env.BRANCH_NAME != null) {
-						branchName = env.BRANCH_NAME.replaceAll("[^a-zA-Z0-9]+", "")
+						branchName = env.BRANCH_NAME.replaceAll(/[^a-zA-Z0-9]+/, "")
 						commit = env.GIT_COMMIT.take(7)
 						imgTag = "build-${branchName}-${commit}"
 					} else {
+						if (buildingTag()) {
+							sh"echo 'building tag'"
+						}
 						imgTag = sh(returnStdout: true, script: 'git describe --abbrev=0 --tags').trim()
 					}
 				}
@@ -72,7 +75,6 @@ pipeline {
         }
 
         stage('Build Docker manifest and push') {
-			agent { label 'arm64' }
             steps {
 				script {
 					withDockerRegistry(credentialsId: 'dockernexus101') {
@@ -82,5 +84,26 @@ pipeline {
 				}
             }
         }
+
+		stage('Trigger Deployment') {
+			when {
+				anyOf {
+					branch 'main'
+					buildingTag()
+				}
+			}
+			steps {
+				script {
+					def environment = 'dev'
+					if (buildingTag()) {
+						environment = 'prod'
+					}
+					build job: 'Deploy', parameters: [
+						string(name: 'env', value: 'dev'),
+						string(name: 'version', value: imgTag)
+					]
+				}
+			}
+		}
     }
 }

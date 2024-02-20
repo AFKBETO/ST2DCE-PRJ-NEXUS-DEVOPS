@@ -1,12 +1,77 @@
-pipeline {
+properties([
+	[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5']],
+	parameters([
+		choice(name: 'env', choices: ['dev', 'prod'], description: 'Environment to deploy', defaultValue: 'dev'),
+		string(name: 'version', description: 'Version of the application to deploy', defaultValue: '', trim: true),
+	]),
+	disableConcurrentBuilds(),
+	disableResume()
+])
 
-    agent any
+def devMap = [
+	namespace: 'devops-dev',
+	endpoint: 'dev',
+	port: '8031',
+]
+def prodMap = [
+	namespace: 'devops-prod',
+	endpoint: 'prod',
+	port: '8032'
+]
+def paramsMap = [
+	dev: devMap,
+	prod: prodMap
+]
+
+def deploymentName = 'java-deployment'
+
+pipeline {
+    agent { label 'arm64' }
 
     stages {
-        stage('Hello') {
+        stage('Git Checkout') {
             steps {
-                echo 'kubectl get pods -n ns-welhome'
+                script {
+					checkout scm
+				}
             }
         }
+
+		stage('Substitute variables in yml files') {
+			steps {
+				script {
+					def varMap = paramsMap[params.env]
+
+					def deploymentPath = "./k8s/deployment.yml"
+					def deploymentYml = readFile(deploymentPath)
+					deploymentYml = deploymentYml.replaceAll('PARAMS_NAMESPACE', varMap.namespace)
+					deploymentYml = deploymentYml.replaceAll('PARAMS_VERSION', params.version)
+					deploymentYml = deploymentYml.replaceAll('PARAMS_SERVICE_PORT', varMap.port)
+					deploymentYml = deploymentYml.replaceAll('PARAMS_ENDPOINT', varMap.endpoint)
+					deploymentYml = deploymentYml.replaceAll('PARAMS_DEPLOYMENT', deploymentName)
+					writeFile file: deploymentPath, text: deploymentYml
+				}
+			}
+		}
+
+		stage('Deploy to Kubernetes') {
+			steps {
+				withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+					script {
+						sh "kubectl --kubeconfig=$KUBECONFIG apply -f ./k8s/deployment.yml"
+					}
+				}
+			}
+		}
+
+		stage('Force rolling update') {
+			steps {
+				withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+					script {
+						sh "kubectl --kubeconfig=$KUBECONFIG rollout restart deployment/${deploymentName} -n ${paramsMap[params.env].namespace}"
+					}
+				}
+			}
+		}
     }
 }
