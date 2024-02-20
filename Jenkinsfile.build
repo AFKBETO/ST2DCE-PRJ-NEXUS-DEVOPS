@@ -103,7 +103,7 @@ pipeline {
 						environment = 'prod'
 					}
 					build job: 'ST2DCE_Project_Nexus/Deploy', parameters: [
-						string(name: 'env', value: 'dev'),
+						string(name: 'env', value: environment),
 						string(name: 'version', value: imgTag)
 					],
 					wait: false
