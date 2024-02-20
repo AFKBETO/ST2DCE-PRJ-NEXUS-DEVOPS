@@ -1,7 +1,7 @@
 properties([
 	[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5']],
 	parameters([
-		choice(name: 'env', choices: ['dev', 'prod'], description: 'Environment to deploy', defaultValue: 'dev'),
+		choice(name: 'env', choices: ['dev', 'prod'], description: 'Environment to deploy'),
 		string(name: 'version', description: 'Version of the application to deploy', defaultValue: '', trim: true),
 	]),
 	disableConcurrentBuilds(),
@@ -50,7 +50,7 @@ pipeline {
 			steps {
 				withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
 					script {
-						sh "kubectl --kubeconfig=$KUBECONFIG apply -f ./k8s/deployment.yml"
+						sh 'kubectl --kubeconfig=$KUBECONFIG apply -f ./k8s/deployment.yml'
 					}
 				}
 			}
@@ -60,7 +60,8 @@ pipeline {
 			steps {
 				withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
 					script {
-						sh "kubectl --kubeconfig=$KUBECONFIG rollout restart deployment/${deploymentName} -n ${paramsMap[params.env].namespace}"
+						kubecmd = 'kubectl --kubeconfig=$KUBECONFIG rollout restart deployment/' + deploymentName + ' -n ' + paramsMap[params.env].namespace
+						sh kubecmd 
 					}
 				}
 			}
