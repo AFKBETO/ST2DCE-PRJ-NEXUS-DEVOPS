@@ -9,7 +9,6 @@ pipeline {
 	agent { label 'arm64' }
 	options {
 		parallelsAlwaysFailFast()
-		skipDefaultCheckout()
 	}
 	environment {
 		TAG_NAME = null
@@ -18,8 +17,6 @@ pipeline {
 		stage('SCM Checkout') {
 			steps {
 				script {
-					cleanWs()
-					checkout scm
 					imgTag = ''
 					if (env.BRANCH_NAME == 'main') {
 						// check if the branch is main
@@ -118,15 +115,4 @@ pipeline {
 			}
 		}
     }
-
-	post {
-		always {
-			clearWs(
-				cleanWhenNotBuilt: false,
-				deleteDirs: true,
-				disableDeferredWipeout: true,
-				notFailBuild: true
-			)
-		}
-	}
 }

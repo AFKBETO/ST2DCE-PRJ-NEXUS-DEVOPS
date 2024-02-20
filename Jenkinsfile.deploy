@@ -27,18 +27,7 @@ def deploymentName = 'java-deployment'
 
 pipeline {
     agent { label 'arm64' }
-	options {
-		skipDefaultCheckout()
-	}
     stages {
-		stage('SCM Checkout') {
-			steps {
-				script {
-					cleanWs()
-					checkout scm
-				}
-			}
-		}
 		stage('Substitute variables in yml files') {
 			steps {
 				script {
@@ -86,17 +75,6 @@ pipeline {
 			steps {
 				build job: 'ST2DCE_Project_Nexus/Test', wait: false	
 			}
-		}
-	}
-
-	post {
-		always {
-			clearWs(
-				cleanWhenNotBuilt: false,
-				deleteDirs: true,
-				disableDeferredWipeout: true,
-				notFailBuild: true
-			)
 		}
 	}
 }
