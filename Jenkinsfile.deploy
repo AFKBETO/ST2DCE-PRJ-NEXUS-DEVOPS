@@ -87,16 +87,16 @@ pipeline {
 				build job: 'ST2DCE_Project_Nexus/Test', wait: false	
 			}
 		}
+	}
 
-		post {
-			always {
-				clearWs(
-					cleanWhenNotBuilt: false,
-					deleteDirs: true,
-					disableDeferredWipeout: true,
-					notFailBuild: true
-				)
-			}
+	post {
+		always {
+			clearWs(
+				cleanWhenNotBuilt: false,
+				deleteDirs: true,
+				disableDeferredWipeout: true,
+				notFailBuild: true
+			)
 		}
-    }
+	}
 }

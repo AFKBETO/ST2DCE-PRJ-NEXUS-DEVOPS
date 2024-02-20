@@ -117,15 +117,16 @@ pipeline {
 				}
 			}
 		}
-		post {
-			always {
-				clearWs(
-					cleanWhenNotBuilt: false,
-					deleteDirs: true,
-					disableDeferredWipeout: true,
-					notFailBuild: true
-				)
-			}
-		}
     }
+
+	post {
+		always {
+			clearWs(
+				cleanWhenNotBuilt: false,
+				deleteDirs: true,
+				disableDeferredWipeout: true,
+				notFailBuild: true
+			)
+		}
+	}
 }
