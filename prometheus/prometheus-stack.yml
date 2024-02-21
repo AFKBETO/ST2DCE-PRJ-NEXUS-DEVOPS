@@ -141,6 +141,56 @@ additionalPrometheusRulesMap:
 
 
 alertmanager:
+  config:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'nexus.devops.efrei@gmail.com'
+      smtp_auth_username: 'nexus.devops.efrei@gmail.com'
+      smtp_auth_password_file: /etc/alertmanager/secrets/alertmanager-config-secret/email_token
+    route:
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 3h
+      routes:
+      - matchers:
+        - namespace = "devops-dev"
+        receiver: 'email-dev'
+      - matchers:
+        - namespace = "devops-prod"
+        receiver: 'email-prod'
+      - receiver: 'null'
+        matchers:
+          - alertname = "Watchdog"
+    receivers:
+      - name: 'email-dev'
+        email_configs:
+        - to: 'nexus.devops.efrei@gmail.com'
+      - name: 'email-prod'
+        email_configs:
+        - to: 'nexus.devops.efrei@gmail.com'
+          headers:
+            Subject: 'InsufficientPods Alert From NEXUS Team'
+        - to: 'quang-viet.nguyen@efrei.net'
+          headers:
+            Subject: 'InsufficientPods Alert From NEXUS Team'
+        - to: 'senhao.jiang@efrei.net'
+          headers:
+            Subject: 'InsufficientPods Alert From NEXUS Team'
+        - to: 'zain.zafar@efrei.net'
+          headers:
+            Subject: 'InsufficientPods Alert From NEXUS Team'
+        - to: 'kerim-serdarovitch.hudayberdiyev@efrei.net'
+          headers:
+            Subject: 'InsufficientPods Alert From NEXUS Team'
+        - to: 'mohamet.dia@intervenants.efrei.net'
+          headers:
+            Subject: 'InsufficientPods Alert From NEXUS Team'
+      - name: 'null'
+  alertmanagerSpec:
+    secrets:
+      - alertmanager-config-secret
+
   service:
     type: LoadBalancer
   
