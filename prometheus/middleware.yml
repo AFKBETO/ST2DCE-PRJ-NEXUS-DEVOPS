@@ -7,3 +7,5 @@ spec:
   stripPrefix:
     prefixes:
       - /grafana
+      - /prometheus
+      - /alertmanager

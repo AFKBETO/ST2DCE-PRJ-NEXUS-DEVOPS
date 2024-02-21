@@ -62,16 +62,108 @@ grafana:
     server:
       root_url: /grafana
 
+  sidecar:
+    datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+      isDefaultDatasource: true
+      timeout: 30
+      defaultDatasourceScrapeInterval: 15s
+
   admin:
   ## Name of the secret. Can be templated.
     existingSecret: grafana-auth-secret
     userKey: admin-user
     passwordKey: admin-password
 
-prometheusOperator:
-  namespaces:
-    releaseNamespace: true
-    additional:
-      - devops-dev
-      - devops-prod
-      - ns-welhome
+  persistence:
+    enabled: true
+    type: sts
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+    finalizers:
+      - kubernetes.io/pvc-protection
+
+prometheus:
+  service:
+    type: LoadBalancer
+
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations: 
+      kubernetes.io/ingress.allow-http: "false"
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      traefik.ingress.kubernetes.io/router.middlewares: prometheus-stripprefix@kubernetescrd
+      ingress.kubernetes.io/ssl-redirect: "false"
+      cert-manager.io/issuer: prod-issuer
+      cert-manager.io/issuer-kind: OriginIssuer
+      cert-manager.io/issuer-group: cert-manager.k8s.cloudflare.com
+
+    hosts:
+      - kube.minhviet.cc
+
+    paths:
+      - /prometheus
+    pathType: Prefix
+
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - kube.minhviet.cc
+
+  prometheusSpec:
+    scrapeInterval: 15s
+    scrapeTimeout: 30s
+    externalUrl: /prometheus
+
+additionalPrometheusRulesMap:
+  devops-efrei:
+    groups:
+      - name: devops
+        rules:
+        # alert when there are less than 2 pods for 30s
+        - alert: InsufficientDevPods
+          expr: kube_deployment_status_replicas_ready{namespace="devops-dev", deployment="java-deployment"} < 2
+          for: 30s
+          labels:
+            severity: page
+          annotations:
+            summary: Insufficient pods in dev
+        - alert: InsufficientProdPods
+          expr: kube_deployment_status_replicas_ready{namespace="devops-prod", deployment="java-deployment"} < 2
+          for: 30s
+          labels:
+            severity: page
+          annotations:
+            summary: Insufficient pods in prod
+
+
+alertmanager:
+  service:
+    type: LoadBalancer
+  
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations: 
+      kubernetes.io/ingress.allow-http: "false"
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      traefik.ingress.kubernetes.io/router.middlewares: prometheus-stripprefix@kubernetescrd
+      ingress.kubernetes.io/ssl-redirect: "false"
+      cert-manager.io/issuer: prod-issuer
+      cert-manager.io/issuer-kind: OriginIssuer
+      cert-manager.io/issuer-group: cert-manager.k8s.cloudflare.com
+
+    hosts:
+      - kube.minhviet.cc
+
+    paths:
+      - /alertmanager
+    pathType: Prefix
+
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - kube.minhviet.cc
