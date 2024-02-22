@@ -1,14 +1,7 @@
 grafana:
   ingress:
-    ## If true, Grafana Ingress will be created
-    ##
     enabled: true
-
-    ## IngressClassName for Grafana Ingress.
-    ## Should be provided if Ingress is enable.
-    ##
     ingressClassName: traefik
-
     annotations: 
       kubernetes.io/ingress.allow-http: "false"
       traefik.ingress.kubernetes.io/router.tls: "true"
@@ -17,41 +10,17 @@ grafana:
       cert-manager.io/issuer: prod-issuer
       cert-manager.io/issuer-kind: OriginIssuer
       cert-manager.io/issuer-group: cert-manager.k8s.cloudflare.com
-
-    ## Hostnames.
-    ## Must be provided if Ingress is enable.
-    ##
-    # hosts:
-    #   - grafana.domain.com
     hosts:
       - kube.minhviet.cc
 
     ## Path for grafana ingress
     path: /grafana
     pathType: Prefix
-
-    ## TLS configuration for grafana Ingress
-    ## Secret must be manually created in the namespace
-    ##
+    ## TLS is issued automatically
     tls:
       - secretName: grafana-tls
         hosts:
           - kube.minhviet.cc
-    # - secretName: grafana-general-tls
-    #   hosts:
-    #   - grafana.example.com
-
-  # # To make Grafana persistent (Using Statefulset)
-  # #
-  # persistence:
-  #   enabled: true
-  #   type: sts
-  #   storageClassName: "storageClassName"
-  #   accessModes:
-  #     - ReadWriteOnce
-  #   size: 20Gi
-  #   finalizers:
-  #     - kubernetes.io/pvc-protection
 
   service:
     type: LoadBalancer
@@ -71,7 +40,6 @@ grafana:
       defaultDatasourceScrapeInterval: 15s
 
   admin:
-  ## Name of the secret. Can be templated.
     existingSecret: grafana-auth-secret
     userKey: admin-user
     passwordKey: admin-password
